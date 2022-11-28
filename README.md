@@ -1,8 +1,6 @@
 # img
 
-An obligatory exploratory repository
-
-<br>
+An obligatory exploratory repository [📷](https://emojipedia.org/camera/)[🖼️](https://emojipedia.org/framed-picture/)
 
 ## Setup 
 
@@ -97,11 +95,10 @@ results.show()
 
 
 
-
-![png](README_files\README2_5_1.png)
-    
+<img src="README_files\README2_5_1.png"/>
 
 
+​    
 
 ```python
 import json
