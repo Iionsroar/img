@@ -20,11 +20,11 @@ An obligatory exploratory repository
 
 <br>
 
-### EDA.ipynb
+## EDA.ipynb
 
 - Contains code exploring ways to tag images using existing tools
 
-#### Basic Attributes
+### Basic Attributes
 
 
 ```python
@@ -64,7 +64,7 @@ print(f"{portrait} + {landscape} + {square} = {portrait + landscape + square}")
     yolov5s.pt - SKIPPED
     70 + 25 + 217 = 312
 
-#### Inference using [YOLOv5](https://github.com/ultralytics/yolov5)
+### Inference using [YOLOv5](https://github.com/ultralytics/yolov5)
 
 
 ```python
@@ -98,7 +98,7 @@ results.show()
 
 
 
-![png](C:\Users\halloween\Desktop\img\README_files\README2_5_1.png)
+![png](README_files\README2_5_1.png)
     
 
 
@@ -145,6 +145,131 @@ for f in os.listdir():
 
 <br>
 
-### main.ipynb
+## main.ipynb
 
 - Custom classification based on my use case (organizing art references, photography)
+
+### Commons
+
+
+```python
+import shutil, os
+
+# Set folder containing image files
+ROOT = r'C:\Users\halloween\Downloads\explo'
+os.chdir(ROOT)
+```
+
+### Classify based on basic image attributes
+
+1. By orientation if not a square
+2. Solely by image width or height
+   - width groups:
+     - w < 1000
+     - w > 1000 
+
+- By size
+
+
+```python
+from PIL import Image
+
+landscape_path = os.path.join(ROOT, "landscape")
+portrait_path = os.path.join(ROOT, "portrait")
+square_path = os.path.join(ROOT, "square")
+
+os.makedirs(landscape_path, exist_ok=True)
+os.makedirs(portrait_path, exist_ok=True)
+os.makedirs(square_path, exist_ok=True)
+
+for f in os.listdir():
+    try:
+        img = Image.open(f)
+        width, height = img.size
+        img.close()
+    except IOError:
+        continue
+
+    f = os.path.join(ROOT, f)
+    if width - height > 10:
+        shutil.move(f, landscape_path)
+    elif height - width > 10:
+        shutil.move(f, portrait_path)
+    else:
+        shutil.move(f, square_path)
+        
+```
+
+### Classify based on objects in the image
+
+1. Things
+2. Person
+3. People 
+
+
+```python
+import torch, json
+
+# Model
+model = torch.hub.load('ultralytics/yolov5', 'yolov5s')  # or yolov5n - yolov5x6, custom
+
+# Folders
+people_path = os.path.join(ROOT, "people")
+person_path = os.path.join(ROOT, "person")
+things_path = os.path.join(ROOT, "things")
+
+os.makedirs(people_path, exist_ok=True)
+os.makedirs(person_path, exist_ok=True)
+os.makedirs(things_path, exist_ok=True)
+
+# Tweak according to needs
+def detect(filename: str) -> set:
+    """Returns: filename - detection1, detection2, etc."""
+
+    # Exclude generated files
+    if "tmp" in filename and "dzx" in filename:
+        return
+    elif "yolo" in filename and ".pt" in filename:
+        return
+
+    # Inference
+    try:
+        results = model(filename)
+    except Exception as e:
+        return f"{filename} - {e.__class__}: {e}"
+    
+    # Results
+    res_json = results.pandas().xyxy[0].to_json(orient="records")
+    predictions = json.loads(res_json)
+    prediction_names = [pred['name'] for pred in predictions]
+    if prediction_names.count('person') > 3:
+        prediction_names.append('people')
+    prediction_names = set(prediction_names)
+    
+    return prediction_names
+
+# Organize files
+for f in os.listdir():
+    predictions = detect(f)
+    if predictions:
+        f = os.path.join(ROOT, f)
+        if "people" in predictions:
+            shutil.move(f, people_path)
+        elif "person" in predictions:
+            shutil.move(f, person_path)
+        else:
+            shutil.move(f, things_path)
+```
+
+    Using cache found in C:\Users\halloween/.cache\torch\hub\ultralytics_yolov5_master
+    YOLOv5  2022-11-28 Python-3.9.6 torch-1.13.0+cu116 CUDA:0 (GeForce GTX 1650, 4096MiB)
+    
+    Fusing layers... 
+    YOLOv5s summary: 213 layers, 7225885 parameters, 0 gradients
+    Adding AutoShape... 
+
+
+
+```python
+
+```
